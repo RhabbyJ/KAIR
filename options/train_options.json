@@ -1,0 +1,93 @@
+{
+  "task": "swinir_denoising_gray_15"    // <name_of_model>_denoising_<gray_or_color>_<sigma>
+  , "model": "plain"                    
+  ,   "gpu_ids": [0]
+  , "dist": true
+
+  , "n_channels": 1                        // 1 for grayscale, 3 for color
+
+  , "path": {
+    "root": "denoising"            
+    , "pretrained_netG": null      
+    , "pretrained_netE": null
+    , "ignore_resume_network": true  // Set to true to start fresh, ignoring existing checkpoints
+  }
+
+  , "datasets": {
+    "train": {
+      "name": "train_dataset"           
+      , "dataset_type": "dncnn"         
+      , "dataroot_H": "trainH"          
+      , "dataroot_L": null              
+
+      , "H_size": 128                   // Original: 128 (reduced was 64)
+      , "sigma": 15                     // Adjust Noise Variance (15 | 25 | 50).
+      , "sigma_test": 15                //
+
+      , "dataloader_shuffle": true
+      , "dataloader_num_workers": 16    // Original: 16 (reduced was 4)
+      , "dataloader_batch_size": 1      
+    }
+    , "test": {
+      "name": "test_dataset"            
+      , "dataset_type": "dncnn"         
+      , "dataroot_H": "testsets/set12"  
+      , "dataroot_L": null              
+
+      , "sigma": 15                      
+      , "sigma_test": 15                 
+
+    }
+  }
+
+  , "netG": {
+    "net_type": "swinir"            // Name of Model
+    , "upscale": 1 
+    , "in_chans": 1 
+    , "img_size": 128               // Original: 128 (reduced was 64)
+    , "window_size": 8  
+    , "img_range": 1.0 
+    , "depths": [6, 6, 6, 6, 6, 6]  // Original: [6,6,6,6,6,6] (reduced was [2,2,2,2,2,2])
+    , "embed_dim": 180              // Original: 180 (reduced was 96)
+    , "num_heads": [6, 6, 6, 6, 6, 6] // Original: [6,6,6,6,6,6] (reduced was [3,3,3,3,3,3])
+    , "mlp_ratio": 2 
+    , "upsampler": null                 
+    , "resi_connection": "1conv"        
+
+    // ELSA Enhancement Parameters
+    , "use_elsa": true                  // Enable ELSA-enhanced attention
+    , "elsa_kernel_size": 7             // ELSA attention kernel size  
+    , "elsa_lam": 1.0                   // Lambda for ghost multiplicative head
+    , "elsa_gamma": 1.0                 // Gamma for ghost additive head
+
+    , "init_type": "default"
+  }
+
+  , "train": {
+    "G_lossfn_type": "charbonnier"      // "l1" | "l2sum" | "l2" | "ssim" | "charbonnier" preferred
+    , "G_lossfn_weight": 1.0            // default
+    , "G_charbonnier_eps": 1e-9
+
+    , "E_decay": 0.999                  // Exponential Moving Average for netG: set 0 to disable; default setting 0.999
+
+    , "G_optimizer_type": "adam"        // fixed, adam is enough
+    , "G_optimizer_lr": 2e-4            // learning rate
+    , "G_optimizer_wd": 0               // weight decay, default 0
+    , "G_optimizer_clipgrad": null      // unused
+    , "G_optimizer_reuse": true         // 
+
+    , "G_scheduler_type": "MultiStepLR" // "MultiStepLR" is enough
+    , "G_scheduler_milestones": [800000, 1200000, 1400000, 1500000, 1600000]
+    , "G_scheduler_gamma": 0.5
+
+    , "G_regularizer_orthstep": null    // unused
+    , "G_regularizer_clipstep": null    // unused
+
+    , "G_param_strict": false           // Set to false to allow flexible loading of mismatched checkpoints
+    , "E_param_strict": false
+
+    , "checkpoint_test": 5000           // for testing
+    , "checkpoint_save": 5000           // for saving model
+    , "checkpoint_print": 200           // for print
+  }
+}
